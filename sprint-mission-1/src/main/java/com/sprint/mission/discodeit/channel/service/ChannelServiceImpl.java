@@ -56,7 +56,7 @@ public class ChannelServiceImpl implements ChannelService {
             User user = userRepository.findByUser(userId)
                 .orElseThrow(() -> new DiscodeitException(
                     ExceptionType.USER_NOT_FOUND,
-                    Map.of("authorId", userId)
+                    Map.of("userId", userId)
                 ));
 
             ReadStatus readStatus = new ReadStatus(channel.getId(), user.getId());

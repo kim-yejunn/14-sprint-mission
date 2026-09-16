@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -30,7 +29,6 @@ public class ChannelController {
     private final ChannelService channelService;
 
     @Operation(summary = "공개 채널 생성")
-    @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(method = RequestMethod.POST, value = "/api/channels/public")
     public ResponseEntity<ChannelResponse> publicCreate(
         @Valid @RequestBody ChannelPublicCreateRequestDto channelPublicCreateRequestDto) {
@@ -40,7 +38,6 @@ public class ChannelController {
     }
 
     @Operation(summary = "비공개 채널 생성")
-    @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(method = RequestMethod.POST, value = "/api/channels/private")
     public ResponseEntity<ChannelResponse> privateCreate(
         @Valid @RequestBody ChannelPrivateCreateRequestDto channelPrivateCreateRequestDto) {
@@ -60,7 +57,6 @@ public class ChannelController {
     }
 
     @Operation(summary = "채널 삭제")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequestMapping(method = RequestMethod.DELETE, value = "/api/channels/{channelId}")
     public ResponseEntity<Void> delete(
         @PathVariable UUID channelId) {

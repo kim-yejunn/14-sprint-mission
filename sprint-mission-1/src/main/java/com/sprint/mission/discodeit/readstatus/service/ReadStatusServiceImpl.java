@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.readstatus.dto.ReadStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.readstatus.entity.ReadStatus;
 import com.sprint.mission.discodeit.readstatus.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,12 +36,17 @@ public class ReadStatusServiceImpl implements ReadStatusService {
         userRepository.findByUser(readStatusCreateRequestDto.userId())
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_NOT_FOUND,
-                Map.of("authorId", readStatusCreateRequestDto.userId())
+                Map.of("userId", readStatusCreateRequestDto.userId())
             ));
+
+        Instant lastReadAt = readStatusCreateRequestDto.lastReadAt() != null
+            ? readStatusCreateRequestDto.lastReadAt()
+            : Instant.now();
 
         return ReadStatusResponseDto.from(readStatusRepository.statusAdd(
             new ReadStatus(readStatusCreateRequestDto.channelId(),
-                readStatusCreateRequestDto.userId())));
+                readStatusCreateRequestDto.userId(),
+                lastReadAt)));
     }
 
     @Override

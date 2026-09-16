@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,7 +40,6 @@ public class MessageController {
     }
 
     @Operation(summary = "메시지 생성")
-    @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(method = RequestMethod.POST,
         value = "/api/messages",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -64,7 +62,6 @@ public class MessageController {
     }
 
     @Operation(summary = "메시지 삭제")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequestMapping(method = RequestMethod.DELETE, value = "/api/messages/{messageId}")
     public ResponseEntity<Void> delete(
         @PathVariable UUID messageId) {

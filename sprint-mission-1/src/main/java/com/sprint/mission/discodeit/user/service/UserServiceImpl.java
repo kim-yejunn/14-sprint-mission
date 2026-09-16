@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
         User user = User.create(userCreateRequestDto.username(), userCreateRequestDto.password(),
             userCreateRequestDto.email(), binaryContentsId);
 
-        UserStatus userStatus = userStatusRepository.statusAdd(new UserStatus(user.getId()));
+        userStatusRepository.statusAdd(new UserStatus(user.getId()));
 
         return UserResponse.from(userRepository.userAdd(user));
     }
@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUser(userId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_NOT_FOUND,
-                Map.of("authorId", userId)
+                Map.of("userId", userId)
             ));
 
         if (profile != null) {
@@ -94,10 +94,10 @@ public class UserServiceImpl implements UserService {
 
         userRepository.update(user);
 
-        UserStatus userStatus = userStatusRepository.findByUserId(userId)
+        userStatusRepository.findByUserId(userId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                Map.of("authorId", user.getId()
+                Map.of("userId", user.getId()
                 )));
         return UserResponse.from(user);
     }
@@ -107,13 +107,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUser(userId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_NOT_FOUND,
-                Map.of("authorId", userId)
+                Map.of("userId", userId)
             ));
 
         userStatusRepository.delete(userStatusRepository.findByUserId(userId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                Map.of("authorId", user.getId()
+                Map.of("userId", user.getId()
                 ))));
         if (Objects.nonNull(user.getProfileId())) {
             binaryContentRepository.delete(user.getProfileId());
@@ -130,7 +130,7 @@ public class UserServiceImpl implements UserService {
                 UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new DiscodeitException(
                         ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                        Map.of("authorId", user.getId()
+                        Map.of("userId", user.getId()
                         )));
                 return UserDto.from(user, userStatus);
             })
@@ -142,13 +142,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUser(userId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_NOT_FOUND,
-                Map.of("authorId", userId)
+                Map.of("userId", userId)
             ));
 
         UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                Map.of("authorId", user.getId()
+                Map.of("userId", user.getId()
                 )));
 
         return UserDto.from(user, userStatus);

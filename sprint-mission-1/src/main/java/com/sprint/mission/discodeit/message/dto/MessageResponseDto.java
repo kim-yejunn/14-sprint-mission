@@ -10,7 +10,7 @@ public record MessageResponseDto(UUID id, Instant createdAt, Instant updatedAt, 
 
     public static MessageResponseDto from(Message message) {
         return new MessageResponseDto(
-            message.getAuthorId(),
+            message.getId(),
             message.getCreatedAt(),
             message.getUpdatedAt(),
             message.getContent(),

@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,7 +31,6 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "사용자 생성")
-    @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(
         method = RequestMethod.POST,
         value = "/api/users",
@@ -60,7 +58,6 @@ public class UserController {
     }
 
     @Operation(summary = "사용자 삭제")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequestMapping(method = RequestMethod.DELETE, value = "/api/users/{userId}")
     public ResponseEntity<Void> delete(
         @Parameter(description = "사용자 ID")

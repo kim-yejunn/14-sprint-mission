@@ -5,10 +5,8 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
 public class BinaryContent implements Serializable {
 
     @Serial
@@ -21,5 +19,12 @@ public class BinaryContent implements Serializable {
     private final String contentType;
     private final byte[] bytes;
 
-    private long size;
+    private final long size;
+
+    public BinaryContent(String fileName, String contentType, byte[] bytes) {
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.bytes = bytes;
+        this.size = (bytes == null) ? 0 : bytes.length;
+    }
 }

@@ -29,10 +29,6 @@ public class UserStatus extends BaseEntity {
             && Duration.between(lastActiveAt, Instant.now()).toMinutes() < 5;
     }
 
-    public void updateUserId(UUID userId) {
-        this.userId = userId;
-    }
-
     public void updateAt(Instant lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
     }

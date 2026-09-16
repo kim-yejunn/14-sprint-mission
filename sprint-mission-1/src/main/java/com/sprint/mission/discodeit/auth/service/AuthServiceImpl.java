@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
             .orElseThrow(
                 () -> new DiscodeitException(
                     ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                    Map.of("authorId", user.getId()
+                    Map.of("userId", user.getId()
                     )));
 
         userStatus.userLogin();

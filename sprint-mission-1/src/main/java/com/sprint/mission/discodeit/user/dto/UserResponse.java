@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record UserResponse(UUID id, Instant createdAt, Instant updatedAt, String username,
-                           String email, String password, UUID profileId) {
+                           String email, UUID profileId) {
 
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -14,7 +14,6 @@ public record UserResponse(UUID id, Instant createdAt, Instant updatedAt, String
             user.getUpdatedAt(),
             user.getUsername(),
             user.getEmail(),
-            user.getPassword(),
             user.getProfileId()
         );
     }

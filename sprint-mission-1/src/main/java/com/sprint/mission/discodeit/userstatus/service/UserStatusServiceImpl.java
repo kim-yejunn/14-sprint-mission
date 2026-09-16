@@ -27,13 +27,13 @@ public class UserStatusServiceImpl implements UserStatusService {
         userRepository.findByUser(userStatusCreateRequestDto.userId())
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_NOT_FOUND,
-                Map.of("authorId", userStatusCreateRequestDto.userId())
+                Map.of("userId", userStatusCreateRequestDto.userId())
             ));
 
         if (userStatusRepository.findByUserId(userStatusCreateRequestDto.userId()).isPresent()) {
             throw new DiscodeitException(
                 ExceptionType.USER_STATUS_CONFLICT,
-                Map.of("authorId", userStatusCreateRequestDto.userId())
+                Map.of("userId", userStatusCreateRequestDto.userId())
             );
         }
 
@@ -46,9 +46,6 @@ public class UserStatusServiceImpl implements UserStatusService {
         UserStatusUpdateRequestDto userStatusUpdateRequestDto) {
         UserStatus userStatus = userStatusRepository.findById(userStatusId);
 
-//        if (userStatusUpdateRequestDto.userId() != null) {
-//            userStatus.updateUserId(userStatusUpdateRequestDto.userId());
-//        }
         if (userStatusUpdateRequestDto.newLastActiveAt() != null) {
             userStatus.updateAt(userStatusUpdateRequestDto.newLastActiveAt());
         }
@@ -64,12 +61,9 @@ public class UserStatusServiceImpl implements UserStatusService {
         UserStatus userStatus = userStatusRepository.findByUserId(userId).orElseThrow((
             () -> new DiscodeitException(
                 ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                Map.of("authorId", userId
+                Map.of("userId", userId
                 ))));
 
-//        if (userStatusUpdateRequestDto.userId() != null) {
-//            userStatus.updateUserId(userStatusUpdateRequestDto.userId());
-//        }
         if (userStatusUpdateRequestDto.newLastActiveAt() != null) {
             userStatus.updateAt(userStatusUpdateRequestDto.newLastActiveAt());
         }
@@ -90,6 +84,7 @@ public class UserStatusServiceImpl implements UserStatusService {
         List<UserStatus> userStatuses = userStatusRepository.findAll();
 
         return userStatuses.stream()
+            .filter(userStatus -> userStatus.getUserId().equals(userId))
             .map(UserStatusResponseDto::from)
             .toList();
     }
