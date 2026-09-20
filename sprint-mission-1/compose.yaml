@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: discodeit-postgres
+    environment:
+      POSTGRES_DB: discodeit
+      POSTGRES_USER: discodeit_user
+      POSTGRES_PASSWORD: discodeit1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - discodeit-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U discodeit_user -d discodeit" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  discodeit-postgres-data:
