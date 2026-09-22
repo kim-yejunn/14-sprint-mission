@@ -1,19 +1,9 @@
 package com.sprint.mission.discodeit.binarycontent.repository;
 
 import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
-import java.util.List;
 import java.util.UUID;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface BinaryContentRepository {
+public interface BinaryContentRepository extends JpaRepository<BinaryContent, UUID> {
 
-    BinaryContent binaryAdd(BinaryContent binaryContent);
-
-    void delete(UUID binaryId);
-
-    BinaryContent findById(UUID binaryId);
-
-    List<BinaryContent> findAllByIdIn(List<UUID> binaryContentIds);
-
-    BinaryContent toBinaryContent(MultipartFile file);
 }
