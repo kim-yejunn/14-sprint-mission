@@ -14,9 +14,9 @@ public record UserDto(UUID id, Instant createdAt, Instant updatedAt, String user
             user.getId(),
             user.getCreatedAt(),
             user.getUpdatedAt(),
-            user.getUsername(),
+            user.getUserName(),
             user.getEmail(),
-            user.getProfileId(),
+            user.getProfile().getId(),
             userStatus.isOnline()
         );
     }

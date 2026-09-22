@@ -12,7 +12,7 @@ public record UserStatusResponseDto(UUID id, Instant createdAt, Instant updatedA
             userStatus.getId(),
             userStatus.getCreatedAt(),
             userStatus.getUpdatedAt(),
-            userStatus.getUserId(),
+            userStatus.getUser().getId(),
             userStatus.isOnline(),
             userStatus.getLastActiveAt()
         );

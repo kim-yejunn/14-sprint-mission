@@ -12,8 +12,8 @@ public record ReadStatusResponseDto(UUID id, Instant createdAt, Instant updatedA
             readStatus.getId(),
             readStatus.getCreatedAt(),
             readStatus.getUpdatedAt(),
-            readStatus.getUserId(),
-            readStatus.getChannelId(),
+            readStatus.getUser().getId(),
+            readStatus.getChannel().getId(),
             readStatus.getLastReadAt()
         );
     }

@@ -12,9 +12,9 @@ public record UserResponse(UUID id, Instant createdAt, Instant updatedAt, String
             user.getId(),
             user.getCreatedAt(),
             user.getUpdatedAt(),
-            user.getUsername(),
+            user.getUserName(),
             user.getEmail(),
-            user.getProfileId()
+            user.getProfile().getId()
         );
     }
 }

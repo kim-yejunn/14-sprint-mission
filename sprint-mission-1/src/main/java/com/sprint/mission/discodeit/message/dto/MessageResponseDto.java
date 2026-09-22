@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.message.dto;
 
+import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
 import com.sprint.mission.discodeit.message.entity.Message;
 import java.time.Instant;
 import java.util.List;
@@ -14,9 +15,12 @@ public record MessageResponseDto(UUID id, Instant createdAt, Instant updatedAt, 
             message.getCreatedAt(),
             message.getUpdatedAt(),
             message.getContent(),
-            message.getChannelId(),
-            message.getAuthorId(),
-            message.getAttachmentIds()
+            message.getChannel().getId(),
+            message.getAuthor().getId(),
+            message.getAttachments()
+                .stream()
+                .map(BinaryContent::getId)
+                .toList()
         );
     }
 }

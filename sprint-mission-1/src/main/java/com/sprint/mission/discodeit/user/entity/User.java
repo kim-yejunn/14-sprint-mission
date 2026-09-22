@@ -6,31 +6,33 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@Table(name = "users")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseUpdatableEntity {
 
-    private String username;
+    private String userName;
     private String password;
     private String email;
     @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "profile_id")
     private BinaryContent profile;
 
-    private User(String username, String password, String email, BinaryContent profile) {
-        this.username = username;
+    private User(String userName, String password, String email, BinaryContent profile) {
+        this.userName = userName;
         this.password = password;
         this.email = email;
         this.profile = profile;
     }
 
-    private User(String username, String password, String email) {
-        this.username = username;
+    private User(String userName, String password, String email) {
+        this.userName = userName;
         this.password = password;
         this.email = email;
     }
@@ -45,7 +47,7 @@ public class User extends BaseUpdatableEntity {
 
     public void update(String name, String password, String email) {
         if (name != null) {
-            this.username = name;
+            this.userName = name;
         }
         if (password != null) {
             this.password = password;

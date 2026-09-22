@@ -1,24 +1,164 @@
 package com.sprint.mission.discodeit.user.service;
 
+import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
+import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.global.exception.DiscodeitException;
+import com.sprint.mission.discodeit.global.exception.ExceptionType;
 import com.sprint.mission.discodeit.user.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.user.dto.UserDto;
 import com.sprint.mission.discodeit.user.dto.UserResponse;
 import com.sprint.mission.discodeit.user.dto.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.user.entity.User;
+import com.sprint.mission.discodeit.user.repository.UserRepository;
+import com.sprint.mission.discodeit.userstatus.entity.UserStatus;
+import com.sprint.mission.discodeit.userstatus.repository.UserStatusRepository;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-public interface UserService {
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserService {
 
-    UserResponse userCreate(UserCreateRequestDto userCreateRequestDto,
-        MultipartFile profile);
+    private final UserRepository userRepository;
+    private final BinaryContentRepository binaryContentRepository;
+    private final UserStatusRepository userStatusRepository;
 
-    UserResponse userUpdate(UUID userId, UserUpdateRequestDto userUpdateRequestDto,
-        MultipartFile profile);
+    @Transactional
+    public UserResponse userCreate(UserCreateRequestDto userCreateRequestDto,
+        MultipartFile profile) {
+        if (userRepository.findByUserName(userCreateRequestDto.username()).isPresent()) {
+            throw new DiscodeitException(
+                ExceptionType.USER_NAME_CONFLICT,
+                Map.of("userName", userCreateRequestDto.username())
+            );
+        }
 
-    void userDelete(UUID userId);
+        if (userRepository.findByEmail(userCreateRequestDto.email()).isPresent()) {
+            throw new DiscodeitException(
+                ExceptionType.USER_EMAIL_CONFLICT,
+                Map.of("userEmail", userCreateRequestDto.email())
+            );
+        }
 
-    List<UserDto> findAll();
+        BinaryContent binaryContent = null;
+        if (profile != null) {
+            try {
+                binaryContent = binaryContentRepository.save(
+                    new BinaryContent(
+                        Objects.requireNonNull(profile.getOriginalFilename()),
+                        profile.getContentType(), profile.getBytes()));
+            } catch (IOException e) {
+                throw new UncheckedIOException(
+                    "파일을 읽는데 실패했습니다: " + profile.getOriginalFilename(),
+                    e);
+            }
+        }
 
-    UserDto findById(UUID userId);
+        User user = User.create(userCreateRequestDto.username(), userCreateRequestDto.password(),
+            userCreateRequestDto.email(), binaryContent);
+
+        userStatusRepository.save(new UserStatus(user));
+
+        return UserResponse.from(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse userUpdate(UUID userId, UserUpdateRequestDto userUpdateRequestDto,
+        MultipartFile profile) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new DiscodeitException(
+                ExceptionType.USER_NOT_FOUND,
+                Map.of("userId", userId)
+            ));
+
+        if (profile != null) {
+            BinaryContent binaryContent;
+            try {
+                binaryContent = new BinaryContent(
+                    profile.getOriginalFilename(),
+                    profile.getContentType(),
+                    profile.getBytes());
+                binaryContentRepository.save(binaryContent);
+            } catch (IOException e) {
+                throw new UncheckedIOException(
+                    "파일을 읽는데 실패했습니다: " + profile.getOriginalFilename(),
+                    e);
+            }
+            if (Objects.nonNull(user.getProfile())) {
+                binaryContentRepository.delete(user.getProfile());
+            }
+            user.updateProfile(binaryContent);
+        }
+
+        user.update(userUpdateRequestDto.newUsername(), userUpdateRequestDto.newPassword(),
+            userUpdateRequestDto.newEmail());
+
+        userRepository.save(user);
+
+        userStatusRepository.findById(userId)
+            .orElseThrow(() -> new DiscodeitException(
+                ExceptionType.USER_STATUS_MISSING_FOR_USER,
+                Map.of("userId", user.getId()
+                )));
+        return UserResponse.from(user);
+    }
+
+    @Transactional
+    public void userDelete(UUID userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new DiscodeitException(
+                ExceptionType.USER_NOT_FOUND,
+                Map.of("userId", userId)
+            ));
+
+        userStatusRepository.delete(userStatusRepository.findById(userId)
+            .orElseThrow(() -> new DiscodeitException(
+                ExceptionType.USER_STATUS_MISSING_FOR_USER,
+                Map.of("userId", user.getId()
+                ))));
+        if (Objects.nonNull(user.getProfile())) {
+            binaryContentRepository.delete(user.getProfile());
+        }
+        userRepository.delete(user);
+    }
+
+    public List<UserDto> findAll() {
+        List<User> users = userRepository.findAll();
+
+        return users.stream()
+            .map(user -> {
+                UserStatus userStatus = userStatusRepository.findById(user.getId())
+                    .orElseThrow(() -> new DiscodeitException(
+                        ExceptionType.USER_STATUS_MISSING_FOR_USER,
+                        Map.of("userId", user.getId()
+                        )));
+                return UserDto.from(user, userStatus);
+            })
+            .toList();
+    }
+
+    public UserDto findById(UUID userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new DiscodeitException(
+                ExceptionType.USER_NOT_FOUND,
+                Map.of("userId", userId)
+            ));
+
+        UserStatus userStatus = userStatusRepository.findById(user.getId())
+            .orElseThrow(() -> new DiscodeitException(
+                ExceptionType.USER_STATUS_MISSING_FOR_USER,
+                Map.of("userId", user.getId()
+                )));
+
+        return UserDto.from(user, userStatus);
+    }
 }

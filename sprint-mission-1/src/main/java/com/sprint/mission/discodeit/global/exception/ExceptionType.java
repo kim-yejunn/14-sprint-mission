@@ -68,6 +68,12 @@ public enum ExceptionType {
         "찾으시는 메세지가 존재하지 않습니다"
     ),
 
+    BINARY_CONTENT_NOT_FOUND(
+        Level.WARN,
+        HttpStatus.NOT_FOUND,
+        "찾으시는 이미지가 존재하지 않습니다"
+    ),
+
 
     AUTH_INVALID(
         Level.WARN,
