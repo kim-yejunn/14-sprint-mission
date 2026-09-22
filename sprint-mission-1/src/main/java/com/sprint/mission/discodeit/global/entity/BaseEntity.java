@@ -1,26 +1,25 @@
 package com.sprint.mission.discodeit.global.entity;
 
-import java.io.Serial;
-import java.io.Serializable;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Getter
-public abstract class BaseEntity implements Serializable {
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class BaseEntity {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @CreatedDate
+    private Instant createdAt = Instant.now();
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    private final UUID id = UUID.randomUUID();
-    private final Instant createdAt = Instant.now();
-    private Instant updatedAt;
-
-    public void markUpdated() {
-        this.updatedAt = Instant.now();
-    }
-
-    public void updateAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }

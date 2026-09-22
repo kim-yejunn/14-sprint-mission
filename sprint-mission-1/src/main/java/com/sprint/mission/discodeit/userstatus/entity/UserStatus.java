@@ -1,23 +1,29 @@
 package com.sprint.mission.discodeit.userstatus.entity;
 
-import com.sprint.mission.discodeit.global.entity.BaseEntity;
-import jakarta.validation.constraints.NotNull;
+import com.sprint.mission.discodeit.global.entity.BaseUpdatableEntity;
+import com.sprint.mission.discodeit.user.entity.User;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
-public class UserStatus extends BaseEntity {
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserStatus extends BaseUpdatableEntity {
 
-    @NotNull
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
     private Instant lastActiveAt;
 
-    public UserStatus(UUID userId) {
-        this.userId = userId;
+    public UserStatus(User user) {
+        this.user = user;
     }
 
     public void userLogin() {

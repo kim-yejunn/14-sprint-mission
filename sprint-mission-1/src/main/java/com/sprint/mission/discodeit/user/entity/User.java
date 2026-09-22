@@ -1,22 +1,32 @@
 package com.sprint.mission.discodeit.user.entity;
 
-import com.sprint.mission.discodeit.global.entity.BaseEntity;
-import java.util.UUID;
+import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
+import com.sprint.mission.discodeit.global.entity.BaseUpdatableEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class User extends BaseEntity {
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseUpdatableEntity {
 
     private String username;
     private String password;
     private String email;
-    private UUID profileId;
+    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
+    @JoinColumn(name = "profile_id")
+    private BinaryContent profile;
 
-    private User(String username, String password, String email, UUID profileId) {
+    private User(String username, String password, String email, BinaryContent profile) {
         this.username = username;
         this.password = password;
         this.email = email;
-        this.profileId = profileId;
+        this.profile = profile;
     }
 
     private User(String username, String password, String email) {
@@ -25,7 +35,7 @@ public class User extends BaseEntity {
         this.email = email;
     }
 
-    public static User create(String name, String password, String email, UUID binaryId) {
+    public static User create(String name, String password, String email, BinaryContent binaryId) {
         return new User(name, password, email, binaryId);
     }
 
@@ -46,9 +56,9 @@ public class User extends BaseEntity {
         super.markUpdated();
     }
 
-    public void updateProfile(UUID binaryId) {
+    public void updateProfile(BinaryContent binaryId) {
         if (binaryId != null) {
-            this.profileId = binaryId;
+            this.profile = binaryId;
             markUpdated();
         }
     }
