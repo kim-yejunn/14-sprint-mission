@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.global.mapper;
 
 import com.sprint.mission.discodeit.global.dto.PageResponse;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ public class PageResponseMapper {
             slice.getContent(),
             slice.getNumber(),
             slice.getSize(),
-            slice.hasContent(),
+            slice.hasNext(),
             null);
     }
 
@@ -22,7 +23,18 @@ public class PageResponseMapper {
             page.getContent(),
             page.getNumber(),
             page.getSize(),
-            page.hasContent(),
+            page.hasNext(),
             page.getTotalElements());
+    }
+
+    public <T> PageResponse<T> fromCursor(List<T> content, Object nextCursor, int size,
+        boolean hasNext) {
+        return new PageResponse<>(
+            content,
+            nextCursor,
+            size,
+            hasNext,
+            null
+        );
     }
 }

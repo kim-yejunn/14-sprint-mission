@@ -18,14 +18,15 @@ import com.sprint.mission.discodeit.message.repository.MessageRepository;
 import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -109,16 +110,31 @@ public class MessageService {
         messageRepository.delete(messages);
     }
 
-    public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Pageable pageable) {
-        Channel channel = channelRepository.findById(channelId)
-            .orElseThrow(() -> new DiscodeitException(
-                ExceptionType.CHANNEL_NOT_FOUND,
-                Map.of("channelId", channelId)
-            ));
+    public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, int size) {
+        if (!channelRepository.existsById(channelId)) {
+            throw new DiscodeitException(ExceptionType.CHANNEL_NOT_FOUND,
+                Map.of("channelId", channelId));
+        }
 
-        Slice<Message> slice = messageRepository.findAllByChannel(channel, pageable);
+        Pageable limit = PageRequest.of(0, size + 1);
+        List<Message> messages = (cursor == null)
+            ? messageRepository.findLatest(channelId, limit)
+            : messageRepository.findBefore(channelId, cursor, limit);
 
-        return pageResponseMapper.fromSlice(slice.map(messageMapper::toDto));
+        boolean hasNext = messages.size() > size;
+        if (hasNext) {
+            messages = messages.subList(0, size);
+        }
+
+        Instant nextCursor = hasNext
+            ? messages.get(messages.size() - 1).getCreatedAt()
+            : null;
+
+        List<MessageDto> content = messages.stream()
+            .map(messageMapper::toDto)
+            .toList();
+
+        return pageResponseMapper.fromCursor(content, nextCursor, size, hasNext);
     }
 
     public MessageDto findById(UUID messageId) {

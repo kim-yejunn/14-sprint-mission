@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.message.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +38,11 @@ public class MessageController {
     @RequestMapping(method = RequestMethod.GET, value = "/api/messages")
     public ResponseEntity<PageResponse<MessageDto>> findAll(
         @RequestParam UUID channelId,
+        @RequestParam(required = false) Instant cursor,
         @PageableDefault(size = 50, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(messageService.findAllByChannelId(channelId, pageable));
+        return ResponseEntity.ok(
+            messageService.findAllByChannelId(channelId, cursor, pageable.getPageSize()));
     }
 
     @Operation(summary = "메시지 생성")
