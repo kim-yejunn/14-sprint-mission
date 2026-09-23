@@ -20,4 +20,10 @@ public class DiscodeitException extends RuntimeException {
         this.type = type;
         this.details = details;
     }
+
+    public DiscodeitException(ExceptionType type, Map<String, Object> details, Throwable cause) {
+        super(type.getMessage(), cause);
+        this.type = type;
+        this.details = details;
+    }
 }

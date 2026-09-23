@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.user.service;
 
 import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
 import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.binarycontent.storage.BinaryContentStorage;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
 import com.sprint.mission.discodeit.message.repository.MessageRepository;
@@ -15,7 +16,6 @@ import com.sprint.mission.discodeit.user.repository.UserRepository;
 import com.sprint.mission.discodeit.userstatus.entity.UserStatus;
 import com.sprint.mission.discodeit.userstatus.repository.UserStatusRepository;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +32,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final BinaryContentStorage binaryContentStorage;
     private final UserStatusRepository userStatusRepository;
     private final ReadStatusRepository readStatusRepository;
     private final MessageRepository messageRepository;
@@ -56,14 +57,16 @@ public class UserService {
 
         BinaryContent binaryContent = null;
         if (profile != null) {
+            binaryContent = binaryContentRepository.save(
+                new BinaryContent(
+                    Objects.requireNonNull(profile.getOriginalFilename()),
+                    profile.getContentType(), profile.getSize()));
             try {
-                binaryContent = binaryContentRepository.save(
-                    new BinaryContent(
-                        Objects.requireNonNull(profile.getOriginalFilename()),
-                        profile.getContentType(), profile.getBytes()));
+                binaryContentStorage.put(binaryContent.getId(), profile.getBytes());
             } catch (IOException e) {
-                throw new UncheckedIOException(
-                    "파일을 읽는데 실패했습니다: " + profile.getOriginalFilename(),
+                throw new DiscodeitException(
+                    ExceptionType.FILE_SAVE_FAILED,
+                    Map.of("binaryContentId", binaryContent.getId()),
                     e);
             }
         }
@@ -87,20 +90,17 @@ public class UserService {
             ));
 
         if (profile != null) {
-            BinaryContent binaryContent;
+            BinaryContent binaryContent = binaryContentRepository.save(
+                new BinaryContent(
+                    Objects.requireNonNull(profile.getOriginalFilename()),
+                    profile.getContentType(), profile.getSize()));
             try {
-                binaryContent = new BinaryContent(
-                    profile.getOriginalFilename(),
-                    profile.getContentType(),
-                    profile.getBytes());
-                binaryContentRepository.save(binaryContent);
+                binaryContentStorage.put(binaryContent.getId(), profile.getBytes());
             } catch (IOException e) {
-                throw new UncheckedIOException(
-                    "파일을 읽는데 실패했습니다: " + profile.getOriginalFilename(),
+                throw new DiscodeitException(
+                    ExceptionType.FILE_SAVE_FAILED,
+                    Map.of("binaryContentId", binaryContent.getId()),
                     e);
-            }
-            if (Objects.nonNull(user.getProfile())) {
-                binaryContentRepository.delete(user.getProfile());
             }
             user.updateProfile(binaryContent);
         }
@@ -126,7 +126,7 @@ public class UserService {
             ));
 
         readStatusRepository.deleteAllByUser(user);
-        messageRepository.deleteAllByAuthor(user);
+        messageRepository.clearAuthor(user);
         userRepository.delete(user);
     }
 

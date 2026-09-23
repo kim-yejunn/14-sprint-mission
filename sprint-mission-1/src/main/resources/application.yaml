@@ -1,8 +1,5 @@
 discodeit:
   seed: true
-  repository:
-    type: file   # jcf | file
-    file-directory: .discodeit
   storage:
     type: local
     local:
@@ -47,3 +44,4 @@ springdoc:
 
 server:
   port: 8080
+

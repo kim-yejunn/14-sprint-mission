@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.message.service;
 
 import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
 import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.binarycontent.storage.BinaryContentStorage;
 import com.sprint.mission.discodeit.channel.entity.Channel;
 import com.sprint.mission.discodeit.channel.repository.ChannelRepository;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
@@ -14,9 +15,11 @@ import com.sprint.mission.discodeit.message.mapper.MessageMapper;
 import com.sprint.mission.discodeit.message.repository.MessageRepository;
 import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ public class MessageService {
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final BinaryContentStorage binaryContentStorage;
     private final MessageMapper messageMapper;
 
     @Transactional
@@ -50,7 +54,24 @@ public class MessageService {
             ));
 
         List<BinaryContent> binaryContents = new ArrayList<>();
-        // TODO: BinaryContent 생성로직 변경
+
+        if (attachments != null) {
+            for (MultipartFile attachment : attachments) {
+                BinaryContent binaryContent = binaryContentRepository.save(
+                    new BinaryContent(
+                        Objects.requireNonNull(attachment.getOriginalFilename()),
+                        attachment.getContentType(), attachment.getSize()));
+                binaryContents.add(binaryContent);
+                try {
+                    binaryContentStorage.put(binaryContent.getId(), attachment.getBytes());
+                } catch (IOException e) {
+                    throw new DiscodeitException(
+                        ExceptionType.FILE_SAVE_FAILED,
+                        Map.of("binaryContentId", binaryContent.getId()),
+                        e);
+                }
+            }
+        }
 
         Message message = new Message(user, channel, messageCreateRequestDto.content(),
             binaryContents);

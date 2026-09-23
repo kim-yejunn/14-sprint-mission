@@ -13,13 +13,11 @@ public class BinaryContent extends BaseEntity {
 
     private String fileName;
     private String contentType;
-    private byte[] bytes;
-    private long size;
+    private Long size;
 
-    public BinaryContent(String fileName, String contentType, byte[] bytes) {
+    public BinaryContent(String fileName, String contentType, Long size) {
         this.fileName = fileName;
         this.contentType = contentType;
-        this.bytes = bytes;
-        this.size = (bytes == null) ? 0 : bytes.length;
+        this.size = size;
     }
 }

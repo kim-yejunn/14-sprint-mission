@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,5 +20,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     @Query("select max(m.createdAt) from Message m where m.channel = :channel")
     Instant findLastMessageAt(@Param("channel") Channel channel);
 
-    void deleteAllByAuthor(User user);
+    @Modifying
+    @Query("update Message m set m.author = null where m.author = :user")
+    void clearAuthor(@Param("user") User user);
 }

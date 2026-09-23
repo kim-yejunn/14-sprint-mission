@@ -73,6 +73,16 @@ public enum ExceptionType {
         HttpStatus.NOT_FOUND,
         "찾으시는 이미지가 존재하지 않습니다"
     ),
+    FILE_SAVE_FAILED(
+        Level.ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "파일을 저장하는데 실패했습니다"
+    ),
+    FILE_NOT_FOUND(
+        Level.ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "파일을 찾을 수 없습니다"
+    ),
 
 
     AUTH_INVALID(
