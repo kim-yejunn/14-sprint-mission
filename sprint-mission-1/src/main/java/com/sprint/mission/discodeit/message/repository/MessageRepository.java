@@ -4,8 +4,9 @@ import com.sprint.mission.discodeit.channel.entity.Channel;
 import com.sprint.mission.discodeit.message.entity.Message;
 import com.sprint.mission.discodeit.user.entity.User;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +14,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    List<Message> findAllByChannel(Channel channel);
+    Slice<Message> findAllByChannel(Channel channel, Pageable pageable);
 
     void deleteByChannel(Channel channel);
 

@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.message.controller;
 
+import com.sprint.mission.discodeit.global.dto.PageResponse;
 import com.sprint.mission.discodeit.message.dto.MessageCreateRequestDto;
 import com.sprint.mission.discodeit.message.dto.MessageDto;
 import com.sprint.mission.discodeit.message.dto.MessageUpdateRequestDto;
@@ -10,6 +11,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,12 +35,13 @@ public class MessageController {
 
     @Operation(summary = "채널의 전체 메시지 조회")
     @RequestMapping(method = RequestMethod.GET, value = "/api/messages")
-    public ResponseEntity<List<MessageDto>> findAll(
-        @RequestParam UUID channelId
+    public ResponseEntity<PageResponse<MessageDto>> findAll(
+        @RequestParam UUID channelId,
+        @PageableDefault(size = 50, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(messageService.findAllByChannelId(channelId));
+            .body(messageService.findAllByChannelId(channelId, pageable));
     }
 
     @Operation(summary = "메시지 생성")
