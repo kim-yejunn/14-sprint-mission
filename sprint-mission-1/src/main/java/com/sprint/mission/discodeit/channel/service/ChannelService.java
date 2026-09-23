@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.channel.service;
 
-import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.channel.dto.ChannelDto;
 import com.sprint.mission.discodeit.channel.dto.ChannelPrivateCreateRequestDto;
 import com.sprint.mission.discodeit.channel.dto.ChannelPublicCreateRequestDto;
@@ -18,6 +17,7 @@ import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,7 +34,6 @@ public class ChannelService {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final ReadStatusRepository readStatusRepository;
-    private final BinaryContentRepository binaryContentRepository;
     private final ChannelMapper channelMapper;
 
     @Transactional
@@ -101,8 +100,17 @@ public class ChannelService {
     }
 
     public List<ChannelDto> findAllByUserId(UUID userId) {
-        return channelRepository.findAllAccessible(userId).stream()
-            .map(this::toResponseDto)
+        List<Channel> channels = channelRepository.findAllAccessible(userId);
+        if (channels.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> channelIds = channels.stream().map(Channel::getId).toList();
+
+        Map<UUID, Instant> lastMessageAtMap = findLastMessageAtMap(channelIds);
+        Map<UUID, List<User>> participantsMap = findParticipantsMap(channelIds);
+
+        return channels.stream()
+            .map(channel -> toResponseDto(channel, lastMessageAtMap, participantsMap))
             .toList();
     }
 
@@ -118,6 +126,33 @@ public class ChannelService {
         channelRepository.delete(channel);
     }
 
+    private Map<UUID, Instant> findLastMessageAtMap(List<UUID> channelIds) {
+        Map<UUID, Instant> lastMessageAtMap = new HashMap<>();
+        for (Object[] row : messageRepository.findLastMessageAtByChannelIds(channelIds)) {
+            lastMessageAtMap.put((UUID) row[0], (Instant) row[1]);
+        }
+        return lastMessageAtMap;
+    }
+
+    private Map<UUID, List<User>> findParticipantsMap(List<UUID> channelIds) {
+        List<ReadStatus> readStatuses =
+            readStatusRepository.findAllByChannelIdIn(channelIds);
+
+        Map<UUID, List<User>> participantsMap = new HashMap<>();
+        for (ReadStatus readStatus : readStatuses) {
+            UUID channelId = readStatus.getChannel().getId();
+
+            List<User> participants = participantsMap.get(channelId);
+            if (participants == null) {
+                participants = new ArrayList<>();
+                participantsMap.put(channelId, participants);
+            }
+            participants.add(readStatus.getUser());
+        }
+        return participantsMap;
+    }
+
+    // 단건용
     private ChannelDto toResponseDto(Channel channel) {
         Instant lastMessageAt = messageRepository.findLastMessageAt(channel);
 
@@ -128,5 +163,18 @@ public class ChannelService {
             : List.of();
 
         return channelMapper.toDto(channel, participants, lastMessageAt);
+    }
+
+    // 목록용
+    private ChannelDto toResponseDto(
+        Channel channel,
+        Map<UUID, Instant> lastMessageAtMap,
+        Map<UUID, List<User>> partipantMap
+    ) {
+        List<User> participants = channel.getType() == ChannelType.PRIVATE
+            ? partipantMap.getOrDefault(channel.getId(), List.of())
+            : List.of();
+
+        return channelMapper.toDto(channel, participants, lastMessageAtMap.get(channel.getId()));
     }
 }
