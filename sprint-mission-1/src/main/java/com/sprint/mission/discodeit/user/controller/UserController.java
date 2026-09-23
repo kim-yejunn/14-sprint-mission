@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.user.controller;
 
 import com.sprint.mission.discodeit.user.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.user.dto.UserDto;
-import com.sprint.mission.discodeit.user.dto.UserResponse;
 import com.sprint.mission.discodeit.user.dto.UserUpdateRequestDto;
 import com.sprint.mission.discodeit.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +34,7 @@ public class UserController {
         method = RequestMethod.POST,
         value = "/api/users",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserResponse> create(
+    public ResponseEntity<UserDto> create(
         @Valid @RequestPart(value = "userCreateRequest") UserCreateRequestDto userCreateRequestDto,
         @RequestPart(value = "profile", required = false) MultipartFile profile) {
         return ResponseEntity
@@ -47,7 +46,7 @@ public class UserController {
     @RequestMapping(method = RequestMethod.PATCH,
         value = "/api/users/{userId}",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserResponse> update(
+    public ResponseEntity<UserDto> update(
         @Parameter(description = "사용자 ID")
         @PathVariable UUID userId,
         @Valid @RequestPart(value = "userUpdateRequest") UserUpdateRequestDto userUpdateRequestDto,

@@ -5,9 +5,10 @@ import com.sprint.mission.discodeit.global.exception.ExceptionType;
 import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
 import com.sprint.mission.discodeit.userstatus.dto.UserStatusCreateRequestDto;
-import com.sprint.mission.discodeit.userstatus.dto.UserStatusResponseDto;
+import com.sprint.mission.discodeit.userstatus.dto.UserStatusDto;
 import com.sprint.mission.discodeit.userstatus.dto.UserStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.userstatus.entity.UserStatus;
+import com.sprint.mission.discodeit.userstatus.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.userstatus.repository.UserStatusRepository;
 import java.util.List;
 import java.util.Map;
@@ -23,9 +24,10 @@ public class UserStatusService {
 
     private final UserRepository userRepository;
     private final UserStatusRepository userStatusRepository;
+    private final UserStatusMapper userStatusMapper;
 
     @Transactional
-    public UserStatusResponseDto userStatusCreate(
+    public UserStatusDto userStatusCreate(
         UserStatusCreateRequestDto userStatusCreateRequestDto) {
 
         User user = userRepository.findById(userStatusCreateRequestDto.userId())
@@ -34,19 +36,19 @@ public class UserStatusService {
                 Map.of("userId", userStatusCreateRequestDto.userId())
             ));
 
-        if (userStatusRepository.findById(userStatusCreateRequestDto.userId()).isPresent()) {
+        if (userStatusRepository.findByUserId(userStatusCreateRequestDto.userId()).isPresent()) {
             throw new DiscodeitException(
                 ExceptionType.USER_STATUS_CONFLICT,
                 Map.of("userId", userStatusCreateRequestDto.userId())
             );
         }
 
-        return UserStatusResponseDto.from(
-            userStatusRepository.save(new UserStatus(user)));
+        return userStatusMapper.toDto(
+            userStatusRepository.save(UserStatus.create(user)));
     }
 
     @Transactional
-    public UserStatusResponseDto userStatusUpdate(UUID userStatusId,
+    public UserStatusDto userStatusUpdate(UUID userStatusId,
         UserStatusUpdateRequestDto userStatusUpdateRequestDto) {
         UserStatus userStatus = userStatusRepository.findById(userStatusId)
             .orElseThrow(() -> new DiscodeitException(
@@ -58,15 +60,13 @@ public class UserStatusService {
             userStatus.updateAt(userStatusUpdateRequestDto.newLastActiveAt());
         }
 
-        userStatusRepository.save(userStatus);
-
-        return UserStatusResponseDto.from(userStatus);
+        return userStatusMapper.toDto(userStatus);
     }
 
     @Transactional
-    public UserStatusResponseDto userStatusUpdateByUserId(UUID userId,
+    public UserStatusDto userStatusUpdateByUserId(UUID userId,
         UserStatusUpdateRequestDto userStatusUpdateRequestDto) {
-        UserStatus userStatus = userStatusRepository.findById(userId).orElseThrow((
+        UserStatus userStatus = userStatusRepository.findByUserId((userId)).orElseThrow((
             () -> new DiscodeitException(
                 ExceptionType.USER_STATUS_MISSING_FOR_USER,
                 Map.of("userId", userId
@@ -76,9 +76,7 @@ public class UserStatusService {
             userStatus.updateAt(userStatusUpdateRequestDto.newLastActiveAt());
         }
 
-        userStatusRepository.save(userStatus);
-
-        return UserStatusResponseDto.from(userStatus);
+        return userStatusMapper.toDto(userStatus);
     }
 
     @Transactional
@@ -93,18 +91,18 @@ public class UserStatusService {
     }
 
 
-    public List<UserStatusResponseDto> findAllByUserId(UUID userId) {
+    public List<UserStatusDto> findAllByUserId(UUID userId) {
         List<UserStatus> userStatuses = userStatusRepository.findAll();
 
         return userStatuses.stream()
             .filter(userStatus -> userStatus.getUser().getId().equals(userId))
-            .map(UserStatusResponseDto::from)
+            .map(userStatusMapper::toDto)
             .toList();
     }
 
 
-    public UserStatusResponseDto findUserStatus(UUID userStatusId) {
-        return UserStatusResponseDto.from(userStatusRepository.findById(userStatusId)
+    public UserStatusDto findUserStatus(UUID userStatusId) {
+        return userStatusMapper.toDto(userStatusRepository.findById(userStatusId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_STATUS_NOT_FOUND,
                 Map.of("userStatusId", userStatusId)

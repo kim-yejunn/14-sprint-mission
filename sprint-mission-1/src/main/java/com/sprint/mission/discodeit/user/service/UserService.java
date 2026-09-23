@@ -4,11 +4,13 @@ import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
 import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
+import com.sprint.mission.discodeit.message.repository.MessageRepository;
+import com.sprint.mission.discodeit.readstatus.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.user.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.user.dto.UserDto;
-import com.sprint.mission.discodeit.user.dto.UserResponse;
 import com.sprint.mission.discodeit.user.dto.UserUpdateRequestDto;
 import com.sprint.mission.discodeit.user.entity.User;
+import com.sprint.mission.discodeit.user.mapper.UserMapper;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
 import com.sprint.mission.discodeit.userstatus.entity.UserStatus;
 import com.sprint.mission.discodeit.userstatus.repository.UserStatusRepository;
@@ -31,9 +33,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final BinaryContentRepository binaryContentRepository;
     private final UserStatusRepository userStatusRepository;
+    private final ReadStatusRepository readStatusRepository;
+    private final MessageRepository messageRepository;
+    private final UserMapper userMapper;
 
     @Transactional
-    public UserResponse userCreate(UserCreateRequestDto userCreateRequestDto,
+    public UserDto userCreate(UserCreateRequestDto userCreateRequestDto,
         MultipartFile profile) {
         if (userRepository.findByUserName(userCreateRequestDto.username()).isPresent()) {
             throw new DiscodeitException(
@@ -63,16 +68,17 @@ public class UserService {
             }
         }
 
-        User user = User.create(userCreateRequestDto.username(), userCreateRequestDto.password(),
-            userCreateRequestDto.email(), binaryContent);
+        User user = userRepository.save(
+            User.create(userCreateRequestDto.username(), userCreateRequestDto.password(),
+                userCreateRequestDto.email(), binaryContent));
 
-        userStatusRepository.save(new UserStatus(user));
+        userStatusRepository.save(UserStatus.create(user));
 
-        return UserResponse.from(userRepository.save(user));
+        return userMapper.toDto(user);
     }
 
     @Transactional
-    public UserResponse userUpdate(UUID userId, UserUpdateRequestDto userUpdateRequestDto,
+    public UserDto userUpdate(UUID userId, UserUpdateRequestDto userUpdateRequestDto,
         MultipartFile profile) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new DiscodeitException(
@@ -102,14 +108,13 @@ public class UserService {
         user.update(userUpdateRequestDto.newUsername(), userUpdateRequestDto.newPassword(),
             userUpdateRequestDto.newEmail());
 
-        userRepository.save(user);
-
-        userStatusRepository.findById(userId)
+        userStatusRepository.findByUser(user)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_STATUS_MISSING_FOR_USER,
                 Map.of("userId", user.getId()
                 )));
-        return UserResponse.from(user);
+
+        return userMapper.toDto(user);
     }
 
     @Transactional
@@ -120,29 +125,14 @@ public class UserService {
                 Map.of("userId", userId)
             ));
 
-        userStatusRepository.delete(userStatusRepository.findById(userId)
-            .orElseThrow(() -> new DiscodeitException(
-                ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                Map.of("userId", user.getId()
-                ))));
-        if (Objects.nonNull(user.getProfile())) {
-            binaryContentRepository.delete(user.getProfile());
-        }
+        readStatusRepository.deleteAllByUser(user);
+        messageRepository.deleteAllByAuthor(user);
         userRepository.delete(user);
     }
 
     public List<UserDto> findAll() {
-        List<User> users = userRepository.findAll();
-
-        return users.stream()
-            .map(user -> {
-                UserStatus userStatus = userStatusRepository.findById(user.getId())
-                    .orElseThrow(() -> new DiscodeitException(
-                        ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                        Map.of("userId", user.getId()
-                        )));
-                return UserDto.from(user, userStatus);
-            })
+        return userRepository.findAll().stream()
+            .map(userMapper::toDto)
             .toList();
     }
 
@@ -153,12 +143,6 @@ public class UserService {
                 Map.of("userId", userId)
             ));
 
-        UserStatus userStatus = userStatusRepository.findById(user.getId())
-            .orElseThrow(() -> new DiscodeitException(
-                ExceptionType.USER_STATUS_MISSING_FOR_USER,
-                Map.of("userId", user.getId()
-                )));
-
-        return UserDto.from(user, userStatus);
+        return userMapper.toDto(user);
     }
 }

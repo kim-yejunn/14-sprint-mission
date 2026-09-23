@@ -7,9 +7,10 @@ import com.sprint.mission.discodeit.channel.repository.ChannelRepository;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
 import com.sprint.mission.discodeit.message.dto.MessageCreateRequestDto;
-import com.sprint.mission.discodeit.message.dto.MessageResponseDto;
+import com.sprint.mission.discodeit.message.dto.MessageDto;
 import com.sprint.mission.discodeit.message.dto.MessageUpdateRequestDto;
 import com.sprint.mission.discodeit.message.entity.Message;
+import com.sprint.mission.discodeit.message.mapper.MessageMapper;
 import com.sprint.mission.discodeit.message.repository.MessageRepository;
 import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
@@ -31,9 +32,10 @@ public class MessageService {
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final MessageMapper messageMapper;
 
     @Transactional
-    public MessageResponseDto messageCreate(MessageCreateRequestDto messageCreateRequestDto,
+    public MessageDto messageCreate(MessageCreateRequestDto messageCreateRequestDto,
         List<MultipartFile> attachments) {
         User user = userRepository.findById(messageCreateRequestDto.authorId())
             .orElseThrow(() -> new DiscodeitException(
@@ -53,11 +55,11 @@ public class MessageService {
         Message message = new Message(user, channel, messageCreateRequestDto.content(),
             binaryContents);
 
-        return MessageResponseDto.from(messageRepository.save(message));
+        return messageMapper.toDto(messageRepository.save(message));
     }
 
     @Transactional
-    public MessageResponseDto messageUpdate(UUID messageId,
+    public MessageDto messageUpdate(UUID messageId,
         MessageUpdateRequestDto messageUpdateRequestDto) {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new DiscodeitException(
@@ -66,9 +68,8 @@ public class MessageService {
             ));
 
         message.updateMessage(messageUpdateRequestDto.newContent());
-        messageRepository.save(message);
 
-        return MessageResponseDto.from(message);
+        return messageMapper.toDto(message);
     }
 
     @Transactional
@@ -79,29 +80,27 @@ public class MessageService {
                 Map.of("messageId", messageId)
             ));
 
-        binaryContentRepository.deleteAll(messages.getAttachments());
-
         messageRepository.delete(messages);
     }
 
-    public List<MessageResponseDto> findAllByChannelId(UUID channelId) {
+    public List<MessageDto> findAllByChannelId(UUID channelId) {
         Channel channel = channelRepository.findById(channelId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.CHANNEL_NOT_FOUND,
                 Map.of("channelId", channelId)
             ));
         return messageRepository.findAllByChannel(channel).stream()
-            .map(MessageResponseDto::from)
+            .map(messageMapper::toDto)
             .toList();
     }
 
-    public MessageResponseDto findById(UUID messageId) {
+    public MessageDto findById(UUID messageId) {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.MESSAGE_NOT_FOUND,
                 Map.of("messageId", messageId)
             ));
 
-        return MessageResponseDto.from(message);
+        return messageMapper.toDto(message);
     }
 }

@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.message.controller;
 
 import com.sprint.mission.discodeit.message.dto.MessageCreateRequestDto;
-import com.sprint.mission.discodeit.message.dto.MessageResponseDto;
+import com.sprint.mission.discodeit.message.dto.MessageDto;
 import com.sprint.mission.discodeit.message.dto.MessageUpdateRequestDto;
 import com.sprint.mission.discodeit.message.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +31,7 @@ public class MessageController {
 
     @Operation(summary = "채널의 전체 메시지 조회")
     @RequestMapping(method = RequestMethod.GET, value = "/api/messages")
-    public ResponseEntity<List<MessageResponseDto>> findAll(
+    public ResponseEntity<List<MessageDto>> findAll(
         @RequestParam UUID channelId
     ) {
         return ResponseEntity
@@ -43,7 +43,7 @@ public class MessageController {
     @RequestMapping(method = RequestMethod.POST,
         value = "/api/messages",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<MessageResponseDto> create(
+    public ResponseEntity<MessageDto> create(
         @Valid @RequestPart(value = "messageCreateRequest") MessageCreateRequestDto messageCreateRequestDto,
         @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
         return ResponseEntity
@@ -53,7 +53,7 @@ public class MessageController {
 
     @Operation(summary = "메시지 수정")
     @RequestMapping(method = RequestMethod.PATCH, value = "/api/messages/{messageId}")
-    public ResponseEntity<MessageResponseDto> update(
+    public ResponseEntity<MessageDto> update(
         @PathVariable UUID messageId,
         @Valid @RequestBody MessageUpdateRequestDto messageUpdateRequestDto) {
         return ResponseEntity

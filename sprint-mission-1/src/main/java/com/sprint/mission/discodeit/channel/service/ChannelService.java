@@ -1,29 +1,26 @@
 package com.sprint.mission.discodeit.channel.service;
 
-import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
 import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.channel.dto.ChannelDto;
 import com.sprint.mission.discodeit.channel.dto.ChannelPrivateCreateRequestDto;
 import com.sprint.mission.discodeit.channel.dto.ChannelPublicCreateRequestDto;
-import com.sprint.mission.discodeit.channel.dto.ChannelResponse;
 import com.sprint.mission.discodeit.channel.dto.ChannelUpdateRequestDto;
 import com.sprint.mission.discodeit.channel.entity.Channel;
 import com.sprint.mission.discodeit.channel.entity.ChannelType;
+import com.sprint.mission.discodeit.channel.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.channel.repository.ChannelRepository;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
-import com.sprint.mission.discodeit.message.entity.Message;
 import com.sprint.mission.discodeit.message.repository.MessageRepository;
 import com.sprint.mission.discodeit.readstatus.entity.ReadStatus;
 import com.sprint.mission.discodeit.readstatus.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,22 +35,25 @@ public class ChannelService {
     private final MessageRepository messageRepository;
     private final ReadStatusRepository readStatusRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final ChannelMapper channelMapper;
 
     @Transactional
-    public ChannelResponse channelCreate(
+    public ChannelDto channelCreate(
         ChannelPublicCreateRequestDto channelPublicCreateRequestDto) {
         Channel channel = new Channel(channelPublicCreateRequestDto.name(),
             ChannelType.PUBLIC, channelPublicCreateRequestDto.description());
         channelRepository.save(channel);
-        return ChannelResponse.from(channel);
+        return toResponseDto(channel);
     }
 
     @Transactional
-    public ChannelResponse privateChannelCreate(
+    public ChannelDto privateChannelCreate(
         ChannelPrivateCreateRequestDto channelPrivateCreateRequestDto) {
         Channel channel = new Channel(ChannelType.PRIVATE);
 
         channelRepository.save(channel);
+
+        List<User> participants = new ArrayList<>();
 
         for (UUID userId : channelPrivateCreateRequestDto.participantIds()) {
             User user = userRepository.findById(userId)
@@ -62,15 +62,15 @@ public class ChannelService {
                     Map.of("userId", userId)
                 ));
 
-            ReadStatus readStatus = new ReadStatus(channel, user);
-            readStatusRepository.save(readStatus);
+            readStatusRepository.save(new ReadStatus(channel, user));
+            participants.add(user);
         }
 
-        return ChannelResponse.from(channel);
+        return channelMapper.toDto(channel, participants, null);
     }
 
     @Transactional
-    public ChannelResponse channelUpdate(UUID channelId,
+    public ChannelDto channelUpdate(UUID channelId,
         ChannelUpdateRequestDto channelUpdateRequestDto) {
         Channel channel = channelRepository.findById(channelId)
             .orElseThrow(() -> new DiscodeitException(
@@ -87,9 +87,8 @@ public class ChannelService {
 
         channel.update(channelUpdateRequestDto.newName(),
             channelUpdateRequestDto.newDescription());
-        channelRepository.save(channel);
 
-        return ChannelResponse.from(channel);
+        return toResponseDto(channel);
     }
 
     public ChannelDto findById(UUID channelId) {
@@ -102,11 +101,7 @@ public class ChannelService {
     }
 
     public List<ChannelDto> findAllByUserId(UUID userId) {
-        List<Channel> publicChannels = channelRepository.findAllByType(ChannelType.PUBLIC);
-
-        List<Channel> myPrivateChannels = channelRepository.findAllByType(ChannelType.PRIVATE);
-
-        return Stream.concat(publicChannels.stream(), myPrivateChannels.stream())
+        return channelRepository.findAllAccessible(userId).stream()
             .map(this::toResponseDto)
             .toList();
     }
@@ -119,35 +114,19 @@ public class ChannelService {
                 Map.of("channelId", channelId)
             ));
 
-        List<UUID> attachmentsId = messageRepository.findAllByChannel(channel).stream()
-            .map(Message::getAttachments)
-            .filter(Objects::nonNull)
-            .flatMap(List::stream)
-            .map(BinaryContent::getId)
-            .toList();
-
-        attachmentsId.forEach(binaryContentRepository::deleteById);
-        messageRepository.deleteByChannel(channel);
         readStatusRepository.deleteByChannel(channel);
         channelRepository.delete(channel);
     }
 
     private ChannelDto toResponseDto(Channel channel) {
-        List<Message> messages = messageRepository.findAllByChannel(channel);
+        Instant lastMessageAt = messageRepository.findLastMessageAt(channel);
 
-        Instant lastMessageAt = messages.stream()
-            .map(Message::getCreatedAt)
-            .max(Instant::compareTo)
-            .orElse(null);
+        List<User> participants = channel.getType() == ChannelType.PRIVATE
+            ? readStatusRepository.findByChannel(channel).stream()
+            .map(ReadStatus::getUser)
+            .toList()
+            : List.of();
 
-        if (channel.getType().equals(ChannelType.PRIVATE)) {
-            List<UUID> participantIds = readStatusRepository.findByChannel((channel))
-                .stream()
-                .map(ReadStatus::getId)
-                .toList();
-            return ChannelDto.from(channel, lastMessageAt, participantIds);
-        }
-
-        return ChannelDto.from(channel, lastMessageAt);
+        return channelMapper.toDto(channel, participants, lastMessageAt);
     }
 }

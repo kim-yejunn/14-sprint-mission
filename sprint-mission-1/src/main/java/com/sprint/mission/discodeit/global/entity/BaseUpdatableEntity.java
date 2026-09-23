@@ -14,8 +14,7 @@ public abstract class BaseUpdatableEntity extends BaseEntity {
 
     @LastModifiedDate
     private Instant updatedAt;
-
-    // TODO: JPA 교체 후 삭제
+    
     public void markUpdated() {
         this.updatedAt = Instant.now();
     }

@@ -3,8 +3,9 @@ package com.sprint.mission.discodeit.auth.service;
 import com.sprint.mission.discodeit.auth.dto.LoginRequestDto;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
-import com.sprint.mission.discodeit.user.dto.UserResponse;
+import com.sprint.mission.discodeit.user.dto.UserDto;
 import com.sprint.mission.discodeit.user.entity.User;
+import com.sprint.mission.discodeit.user.mapper.UserMapper;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
 import com.sprint.mission.discodeit.userstatus.entity.UserStatus;
 import com.sprint.mission.discodeit.userstatus.repository.UserStatusRepository;
@@ -20,10 +21,11 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserStatusRepository userStatusRepository;
+    private final UserMapper userMapper;
 
     @Transactional
-    public UserResponse login(LoginRequestDto loginRequestDto) {
-        User user = (User) userRepository.findByUserName(loginRequestDto.username())
+    public UserDto login(LoginRequestDto loginRequestDto) {
+        User user = userRepository.findByUserName(loginRequestDto.username())
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.AUTH_INVALID
             ));
@@ -42,8 +44,7 @@ public class AuthService {
                     )));
 
         userStatus.userLogin();
-        userStatusRepository.save(userStatus);
 
-        return UserResponse.from(user);
+        return userMapper.toDto(user);
     }
 }

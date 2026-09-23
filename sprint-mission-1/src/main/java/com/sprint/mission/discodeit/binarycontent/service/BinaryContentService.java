@@ -1,8 +1,9 @@
 package com.sprint.mission.discodeit.binarycontent.service;
 
 import com.sprint.mission.discodeit.binarycontent.dto.BinaryContentCreateRequestDto;
-import com.sprint.mission.discodeit.binarycontent.dto.BinaryContentResponseDto;
+import com.sprint.mission.discodeit.binarycontent.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.binarycontent.entity.BinaryContent;
+import com.sprint.mission.discodeit.binarycontent.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.binarycontent.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
@@ -19,11 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class BinaryContentService {
 
     private final BinaryContentRepository binaryContentRepository;
+    private final BinaryContentMapper binaryContentMapper;
 
     @Transactional
-    public BinaryContentResponseDto binaryContentCreate(
+    public BinaryContentDto binaryContentCreate(
         BinaryContentCreateRequestDto binaryContentCreateRequestDto) {
-        return BinaryContentResponseDto.from(binaryContentRepository.save(
+        return binaryContentMapper.toDto(binaryContentRepository.save(
             new BinaryContent(binaryContentCreateRequestDto.fileName(),
                 binaryContentCreateRequestDto.contentType(),
                 binaryContentCreateRequestDto.bytes())));
@@ -39,17 +41,16 @@ public class BinaryContentService {
         binaryContentRepository.delete(binaryContent);
     }
 
-    public List<BinaryContentResponseDto> findAllByIdIn(List<UUID> binaryContentIds) {
-        // TODO: 파라미터 개선 사항
-        List<BinaryContent> binaryContents = binaryContentRepository.findAll();
+    public List<BinaryContentDto> findAllByIdIn(List<UUID> binaryContentIds) {
+        List<BinaryContent> binaryContents = binaryContentRepository.findAllById(binaryContentIds);
 
         return binaryContents.stream()
-            .map(BinaryContentResponseDto::from)
+            .map(binaryContentMapper::toDto)
             .toList();
     }
 
-    public BinaryContentResponseDto findBinaryContent(UUID binaryContentId) {
-        return BinaryContentResponseDto.from(binaryContentRepository.findById(binaryContentId)
+    public BinaryContentDto findBinaryContent(UUID binaryContentId) {
+        return binaryContentMapper.toDto(binaryContentRepository.findById(binaryContentId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.BINARY_CONTENT_NOT_FOUND,
                 Map.of("binaryContentId", binaryContentId)

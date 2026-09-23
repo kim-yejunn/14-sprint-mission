@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.readstatus.controller;
 
 import com.sprint.mission.discodeit.readstatus.dto.ReadStatusCreateRequestDto;
-import com.sprint.mission.discodeit.readstatus.dto.ReadStatusResponseDto;
+import com.sprint.mission.discodeit.readstatus.dto.ReadStatusDto;
 import com.sprint.mission.discodeit.readstatus.dto.ReadStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.readstatus.service.ReadStatusService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +28,7 @@ public class ReadStatusController {
 
     @Operation(summary = "읽음 상태 조회")
     @RequestMapping(method = RequestMethod.GET, value = "/api/readStatuses")
-    public ResponseEntity<List<ReadStatusResponseDto>> findAll(
+    public ResponseEntity<List<ReadStatusDto>> findAll(
         @RequestParam UUID userId
     ) {
         return ResponseEntity
@@ -38,7 +38,7 @@ public class ReadStatusController {
 
     @Operation(summary = "읽음 상태 생성")
     @RequestMapping(method = RequestMethod.POST, value = "/api/readStatuses")
-    public ResponseEntity<ReadStatusResponseDto> create(
+    public ResponseEntity<ReadStatusDto> create(
         @Valid @RequestBody ReadStatusCreateRequestDto readStatusCreateRequestDto) {
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -47,7 +47,7 @@ public class ReadStatusController {
 
     @Operation(summary = "읽음 상태 수정")
     @RequestMapping(method = RequestMethod.PATCH, value = "/api/readStatuses/{readStatusId}")
-    public ResponseEntity<ReadStatusResponseDto> update(
+    public ResponseEntity<ReadStatusDto> update(
         @PathVariable UUID readStatusId,
         @Valid @RequestBody ReadStatusUpdateRequestDto readStatusUpdateRequestDto) {
         return ResponseEntity

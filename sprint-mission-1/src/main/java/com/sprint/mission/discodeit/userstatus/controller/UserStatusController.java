@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.userstatus.controller;
 
-import com.sprint.mission.discodeit.userstatus.dto.UserStatusResponseDto;
+import com.sprint.mission.discodeit.userstatus.dto.UserStatusDto;
 import com.sprint.mission.discodeit.userstatus.dto.UserStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.userstatus.service.UserStatusService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +25,7 @@ public class UserStatusController {
 
     @Operation(summary = "사용자 상태 수정")
     @RequestMapping(method = RequestMethod.PATCH, value = "/api/users/{userId}/userStatus")
-    public ResponseEntity<UserStatusResponseDto> userStatusUpdate(
+    public ResponseEntity<UserStatusDto> userStatusUpdate(
         @PathVariable UUID userId,
         @Valid @RequestBody UserStatusUpdateRequestDto userStatusUpdateRequestDto) {
         return ResponseEntity

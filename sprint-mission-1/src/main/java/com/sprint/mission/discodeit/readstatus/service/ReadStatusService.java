@@ -5,9 +5,10 @@ import com.sprint.mission.discodeit.channel.repository.ChannelRepository;
 import com.sprint.mission.discodeit.global.exception.DiscodeitException;
 import com.sprint.mission.discodeit.global.exception.ExceptionType;
 import com.sprint.mission.discodeit.readstatus.dto.ReadStatusCreateRequestDto;
-import com.sprint.mission.discodeit.readstatus.dto.ReadStatusResponseDto;
+import com.sprint.mission.discodeit.readstatus.dto.ReadStatusDto;
 import com.sprint.mission.discodeit.readstatus.dto.ReadStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.readstatus.entity.ReadStatus;
+import com.sprint.mission.discodeit.readstatus.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.readstatus.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.user.entity.User;
 import com.sprint.mission.discodeit.user.repository.UserRepository;
@@ -26,9 +27,10 @@ public class ReadStatusService {
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
     private final ReadStatusRepository readStatusRepository;
+    private final ReadStatusMapper readStatusMapper;
 
     @Transactional
-    public ReadStatusResponseDto readStatusCreate(
+    public ReadStatusDto readStatusCreate(
         ReadStatusCreateRequestDto readStatusCreateRequestDto) {
         Channel channel = channelRepository.findById(readStatusCreateRequestDto.channelId())
             .orElseThrow(() -> new DiscodeitException(
@@ -42,16 +44,21 @@ public class ReadStatusService {
                 Map.of("userId", readStatusCreateRequestDto.userId())
             ));
 
+        if (readStatusRepository.existsByUserAndChannel(user, channel)) {
+            throw new DiscodeitException(
+                ExceptionType.READ_STATUS_CONFLICT);
+        }
+
         Instant lastReadAt = readStatusCreateRequestDto.lastReadAt() != null
             ? readStatusCreateRequestDto.lastReadAt()
             : Instant.now();
 
-        return ReadStatusResponseDto.from(readStatusRepository.save(
+        return readStatusMapper.toDto(readStatusRepository.save(
             new ReadStatus(channel, user, lastReadAt)));
     }
 
     @Transactional
-    public ReadStatusResponseDto readStatusUpdate(UUID readStatusId,
+    public ReadStatusDto readStatusUpdate(UUID readStatusId,
         ReadStatusUpdateRequestDto readStatusUpdateRequestDto) {
         ReadStatus readStatus = readStatusRepository.findById(readStatusId)
             .orElseThrow(() -> new DiscodeitException(
@@ -63,9 +70,7 @@ public class ReadStatusService {
             readStatus.updateAt(readStatusUpdateRequestDto.newLastReadAt());
         }
 
-        readStatusRepository.save(readStatus);
-
-        return ReadStatusResponseDto.from(readStatus);
+        return readStatusMapper.toDto(readStatus);
     }
 
     @Transactional
@@ -78,7 +83,7 @@ public class ReadStatusService {
         readStatusRepository.delete(readStatus);
     }
 
-    public List<ReadStatusResponseDto> findAllByUserId(UUID userId) {
+    public List<ReadStatusDto> findAllByUserId(UUID userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_NOT_FOUND,
@@ -88,12 +93,12 @@ public class ReadStatusService {
         List<ReadStatus> readStatuses = readStatusRepository.findByUser(user);
 
         return readStatuses.stream()
-            .map(ReadStatusResponseDto::from)
+            .map(readStatusMapper::toDto)
             .toList();
     }
 
-    public ReadStatusResponseDto findReadStatus(UUID readStatusId) {
-        return ReadStatusResponseDto.from(readStatusRepository.findById(readStatusId)
+    public ReadStatusDto findReadStatus(UUID readStatusId) {
+        return readStatusMapper.toDto(readStatusRepository.findById(readStatusId)
             .orElseThrow(() -> new DiscodeitException(
                 ExceptionType.USER_STATUS_NOT_FOUND,
                 Map.of("readStatusId", readStatusId)

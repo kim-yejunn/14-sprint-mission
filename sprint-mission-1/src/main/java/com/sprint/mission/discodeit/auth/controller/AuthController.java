@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.auth.controller;
 
 import com.sprint.mission.discodeit.auth.dto.LoginRequestDto;
 import com.sprint.mission.discodeit.auth.service.AuthService;
-import com.sprint.mission.discodeit.user.dto.UserResponse;
+import com.sprint.mission.discodeit.user.dto.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,7 +23,7 @@ public class AuthController {
 
     @Operation(summary = "사용자 로그인")
     @RequestMapping(method = RequestMethod.POST, value = "/api/auth/login")
-    public ResponseEntity<UserResponse> login(
+    public ResponseEntity<UserDto> login(
         @Valid @RequestBody LoginRequestDto loginRequestDto) {
 
         return ResponseEntity

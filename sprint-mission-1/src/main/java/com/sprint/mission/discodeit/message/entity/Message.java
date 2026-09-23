@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,13 +29,13 @@ public class Message extends BaseUpdatableEntity {
     private Channel channel;
     @NonNull
     private String content;
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinTable(
         name = "message_attachments",
         joinColumns = @JoinColumn(name = "message_id"),
         inverseJoinColumns = @JoinColumn(name = "attachment_id")
     )
-    private List<BinaryContent> attachments;
+    private List<BinaryContent> attachments = new ArrayList<>();
 
     public Message(User author, Channel channel, String content,
         List<BinaryContent> attachments) {

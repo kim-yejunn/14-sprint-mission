@@ -81,6 +81,11 @@ public enum ExceptionType {
         "아이디 또는 비밀번호가 올바르지 않습니다"
     ),
 
+    READ_STATUS_CONFLICT(
+        Level.WARN,
+        HttpStatus.CONFLICT,
+        "이미 존재하는 읽음 상태입니다"
+    ),
 
     VALIDATION_FAILED(
         Level.WARN,

@@ -5,7 +5,7 @@ import com.sprint.mission.discodeit.user.entity.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.AccessLevel;
@@ -17,25 +17,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserStatus extends BaseUpdatableEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
     private Instant lastActiveAt;
 
-    public UserStatus(User user) {
+    private UserStatus(User user) {
         this.user = user;
+        this.lastActiveAt = Instant.now();
+        user.assignStatus(this);
+    }
+
+    private void online() {
+        this.lastActiveAt = Instant.now();
+    }
+
+    public static UserStatus create(User user) {
+        return new UserStatus(user);
     }
 
     public void userLogin() {
+        online();
         super.markUpdated();
     }
 
     public boolean isOnline() {
         return lastActiveAt != null
             && Duration.between(lastActiveAt, Instant.now()).toMinutes() < 5;
-    }
-
-    public void updateAt(Instant lastActiveAt) {
-        this.lastActiveAt = lastActiveAt;
     }
 }
