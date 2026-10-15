@@ -1,0 +1,11 @@
+.git
+.gradle
+.idea
+build
+.discodeit
+.logs
+.env
+discodeit.env
+*.pem
+*.md
+.DS_Store
