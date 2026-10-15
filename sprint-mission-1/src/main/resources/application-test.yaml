@@ -13,6 +13,10 @@ spring:
         format_sql: true
         default_batch_fetch_size: 100
 
+discodeit:
+  storage:
+    type: local
+
 logging:
   level:
     org.hibernate.SQL: debug
